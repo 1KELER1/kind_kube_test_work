@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "my-static-site.fullname" . }}
+  labels:
+    app: {{ include "my-static-site.name" . }} 
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ include "my-static-site.name" . }}

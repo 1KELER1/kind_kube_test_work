@@ -1,0 +1,29 @@
+apiVersion: v2
+name: my-static-site
+description: A Helm chart for deploying static content via NGINX with autoscaling and monitoring
+
+# Версия чарта — меняйте при изменениях шаблонов
+version: 0.1.0
+
+# Минимальная версия Helm
+helmVersion: ">=3.0.0"
+
+# Версия приложения (ваша Docker image версия)
+appVersion: "1.0.0"
+
+# Ключевые слова для поиска (опционально)
+keywords:
+  - nginx
+  - static
+  - web
+  - autoscaling
+  - prometheus
+  - monitoring
+
+# Автор и контакт (опционально)
+maintainers:
+  - name: Your Name
+    email: your.email@example.com
+
+# Лицензия (опционально)
+license: MIT
