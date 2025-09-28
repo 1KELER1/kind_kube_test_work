@@ -1,18 +1,34 @@
+# templates/hpa.yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "my-static-site.fullname" . }}
+  namespace: {{ .Release.Namespace | default "default" }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ include "my-static-site.fullname" . }}
   minReplicas: 1
-  maxReplicas: 10
+  maxReplicas: 7
   metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 40
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_total  # ← ИСПРАВЛЕНО! Было http_requests_total
+      target:
+        type: AverageValue
+        averageValue: "5"
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
