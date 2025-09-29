@@ -144,6 +144,24 @@ kubectl apply -f my-nginx/nginx-ingress-fixed.yaml
 
 ---
 
+## 10. Нагрузочное тестирование с Locust
+
+### Запуск Locust для тестирования (5 RPS)
+
+```bash
+locust -f test_5rps.py --host=http://localhost:8080 --users=1 --spawn-rate=1
+```
+
+После запуска откройте Web UI Locust: http://localhost:8089
+
+### Запуск Locust в headless режиме
+
+```bash
+locust -f test_5rps.py --host=http://localhost:8080 --users=1 --spawn-rate=1 --headless --run-time 5m
+```
+
+---
+
 ## Проверка развертывания
 
 ### Проверка подов
