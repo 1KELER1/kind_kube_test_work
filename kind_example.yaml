@@ -3,7 +3,9 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
   extraPortMappings:
-  - containerPort: 31693
+  - containerPort: 30806  # NodePort ingress-nginx
+    hostPort: 8080
+    protocol: TCP
+  - containerPort: 31693  # Ваш прямой NodePort
     hostPort: 31693
-    listenAddress: "0.0.0.0"  # Позволяет доступ со всех интерфейсов
-    protocol: tcp
+    protocol: TCP

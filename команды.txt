@@ -94,3 +94,63 @@ victor@keler:~/Desktop/kind-example/test_work$ kubectl patch hpa my-static-site-
   }
 }'
 
+
+
+
+(   for i in {1..3600}; do  # 20 RPS на 3 минуты
+    curl -s http://localhost:8080/ >/dev/null &     sleep 0.05  # 20 запросов в секунду
+    if [ $((i % 200)) -eq 0 ]; then       HPA_VALUE=$(kubectl get hpa keda-hpa-nginx-simple-scaler --no-headers | awk '{print $4}');       PODS=$(kubectl get pods -l app=my-static-site --no-headers | wc -l);       echo "Секунда $((i/20)): HPA = $HPA_VALUE, Подов = $PODS";     fi;   done; )
+
+
+
+helm upgrade ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --set controller.service.type=NodePort \
+  --set controller.service.nodePorts.http=30806 \
+  --set controller.service.nodePorts.https=30807 \
+  --set controller.metrics.enabled=true \
+  --set controller.metrics.serviceMonitor.enabled=true \
+  --set controller.metrics.serviceMonitor.additionalLabels.release="prometheus-stack"
+
+
+  kind create cluster --name test-cluster --config=kind-rps-cluster.yaml
+
+  kubectl config use-context kind-test-cluster
+
+  docker build -t my-static-nginx:latest .
+  kind load docker-image my-static-nginx:latest --name test-cluster
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx  
+helm repo add kedacore https://kedacore.github.io/charts
+helm repo update
+
+
+# Prometheus + Grafana
+helm install prometheus-stack prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace \
+  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
+
+
+  helm install keda kedacore/keda \
+  --namespace keda-system \
+  --create-namespace
+
+
+  helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace \
+  --set controller.service.type=NodePort \
+  --set controller.service.nodePorts.http=30080 \
+  --set controller.metrics.enabled=true \
+  --set controller.metrics.serviceMonitor.enabled=true \
+  --set controller.metrics.serviceMonitor.additionalLabels.release="prometheus-stack"
+
+
+
+
+  helm install  my-static-site  my-nginx/
+  kubectl apply -f my-nginx/keda-nginx-simple.yaml 
+  kubectl apply -f my-nginx/nginx-ingress-fixed.yaml
+

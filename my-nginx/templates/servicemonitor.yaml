@@ -1,27 +1,19 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ include "my-static-site.fullname" . }}-metrics
-  labels:
-    app: {{ include "my-static-site.name" . }}
-spec:
-  ports:
-    - name: metrics
-      port: 9113
-      targetPort: metrics
-  selector:
-    app: {{ include "my-static-site.name" . }}
----
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "my-static-site.fullname" . }}
+  name: ingress-nginx-controller-metrics
+  namespace: ingress-nginx
   labels:
     release: prometheus-stack
 spec:
   selector:
     matchLabels:
-      app: {{ include "my-static-site.name" . }}
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/component: controller
+  namespaceSelector:
+    matchNames:
+    - ingress-nginx
   endpoints:
-    - port: metrics
-      interval: 15s
+  - port: prometheus
+    interval: 15s
+    path: /metrics
