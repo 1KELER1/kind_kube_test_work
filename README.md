@@ -30,6 +30,9 @@ make check
 - **Grafana**: http://localhost:3000 (логин "admin"/пароль "prom-operator")
 - **Автомасштабирование**: 1-5 реплик при превышении 5 RPS
 
+Для графаны рекомендованно смотреть дашборд
+Kubernetes / Compute Resources / Namespace (Pods)
+
 ### Системные требования
 
 - Docker
