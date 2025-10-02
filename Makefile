@@ -48,9 +48,9 @@ deploy: setup
 	kubectl wait --for=condition=Ready pods --all -n ingress-nginx --timeout=180s
 
 	helm install my-static-site my-nginx/ --namespace $(NAMESPACE)
-	kubectl apply -f my-nginx/keda-nginx-simple.yaml --namespace $(NAMESPACE)
-	kubectl apply -f my-nginx/nginx-ingress-fixed.yaml --namespace $(NAMESPACE)
 
+	@echo "  Ждём пока поды приложения будут готовы..."
+	kubectl wait --for=condition=Ready pods --all -n $(NAMESPACE) --timeout=180s
 	@echo "Развертывание завершено"
 
 
@@ -130,6 +130,7 @@ manifest_update:
 # Справка
 help:
 	@echo " Доступные команды:"
+	@echo "  check   - Проверка статуса кластера и приложений"
 	@echo "  setup   - Установка Helm репозиториев"
 	@echo "  deploy  - Полное развертывание проекта"
 	@echo "  grafana - Получение доступа к графане"

@@ -3,14 +3,16 @@ kind: Service
 metadata:
   name: {{ include "my-static-site.fullname" . }}
   labels:
-    app: {{ include "my-static-site.name" . }} 
+    app: {{ include "my-static-site.name" . }}
 spec:
-  type: NodePort
+  type: {{ .Values.service.type }}
   ports:
-    - port: 80
+    - port: {{ .Values.service.port }}
       targetPort: 80
       protocol: TCP
       name: http
-      nodePort: 31693
+      {{- if eq .Values.service.type "NodePort" }}
+      nodePort: {{ .Values.service.nodePort | default 31693 }}
+      {{- end }}
   selector:
     app: {{ include "my-static-site.name" . }}
