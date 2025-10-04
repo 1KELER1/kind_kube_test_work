@@ -35,6 +35,16 @@ grafana:
   nodePort: 30300
 
 
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetAverageValue: "5000m"  
+  up_stabilizationWindowSeconds: 60
+  down_stabilizationWindowSeconds: 30
+
+
+
 
 prometheus:
   enabled: true

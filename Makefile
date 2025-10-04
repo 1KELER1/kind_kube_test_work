@@ -44,7 +44,6 @@ deploy: setup
 	@echo "Ожидание готовности Prometheus Adapter..."
 	kubectl wait --for=condition=Ready pods -l app.kubernetes.io/name=prometheus-adapter -n monitoring --timeout=120s
 
-	kubectl apply -f my-nginx/hpa-rps.yaml
 
 
 	@echo "Установка Ingress NGINX..."
