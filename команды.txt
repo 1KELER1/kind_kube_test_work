@@ -154,3 +154,11 @@ helm install prometheus-stack prometheus-community/kube-prometheus-stack \
   kubectl apply -f my-nginx/keda-nginx-simple.yaml 
   kubectl apply -f my-nginx/nginx-ingress-fixed.yaml
 
+
+  kubectl port-forward service/prometheus-stack-kube-prom-prometheus 9090:9090 -n monitoring
+
+
+  helm install prometheus-adapter prometheus-community/prometheus-adapter \
+  --namespace prometheus \
+  --values prometheus-adapter-values.yaml
+

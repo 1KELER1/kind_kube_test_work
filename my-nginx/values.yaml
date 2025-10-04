@@ -34,30 +34,7 @@ grafana:
   expose: true
   nodePort: 30300
 
-keda:
-  enabled: true
-  minReplicas: 1
-  maxReplicas: 5
-  pollingInterval: 15
-  cooldownPeriod: 30
-  advanced:
-    scaleDown:
-      stabilizationWindowSeconds: 60
-      policies:
-        - type: Pods
-          value: 1
-          periodSeconds: 30
-    scaleUp:
-      stabilizationWindowSeconds: 0
-      policies:
-        - type: Percent
-          value: 100
-          periodSeconds: 15
-  prometheus:
-    server: http://prometheus-stack-kube-prom-prometheus.monitoring.svc:9090
-    metric: nginx_total_requests
-    threshold: "5"
-    query: sum(rate(nginx_ingress_controller_nginx_process_requests_total[2m]))
+
 
 prometheus:
   enabled: true

@@ -1,7 +1,7 @@
 
 # Переменные
 PROJECT_NAME = kubernetes-autoscaler
-CLUSTER_NAME = test1-cluster
+CLUSTER_NAME = test-cluster
 NAMESPACE = default
 HELM_REPOS = prometheus-community ingress-nginx kedacore
 # переменная для флагов по умолчанию
@@ -13,30 +13,41 @@ MAKEFLAGS += --no-print-directory
 
 # Установка зависимостей helm
 setup:
-	@echo "🔧 Настройка окружения..."
+	@echo "Настройка окружения..."
 	$(foreach repo,$(HELM_REPOS), \
 		-helm repo add $(repo) https://$(repo).github.io/helm-charts;)
 	helm repo update
-	@echo "✅ Настройка завершена"
+	@echo "Настройка завершена"
 
 # Полное развертывание
 deploy: setup
-	@echo " Развертывание $(PROJECT_NAME)..."
+	@echo "Развертывание $(PROJECT_NAME)..."
 	kind create cluster --name $(CLUSTER_NAME) --config=kind-rps-cluster.yaml
 	kubectl config use-context kind-$(CLUSTER_NAME)
 	docker build -t my-static-nginx:latest .
 	kind load docker-image my-static-nginx:latest --name $(CLUSTER_NAME)
 
+	@echo "Установка Prometheus Stack..."
 	helm install prometheus-stack prometheus-community/kube-prometheus-stack \
-  --namespace monitoring \
-  --create-namespace \
-  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
-  
-	helm install keda kedacore/keda --namespace keda-system --create-namespace
+		--namespace monitoring \
+		--create-namespace \
+		--set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
 
+	@echo "Ожидание готовности Prometheus..."
 	kubectl wait --for=condition=Ready pods --all -n monitoring --timeout=300s
-	kubectl wait --for=condition=Ready pods --all -n keda-system --timeout=120s
 
+	@echo "Установка Prometheus Adapter..."
+	  helm install prometheus-adapter prometheus-community/prometheus-adapter \
+		--namespace monitoring \
+		--values my-nginx/prometheus-adapter-values.yaml
+
+	@echo "Ожидание готовности Prometheus Adapter..."
+	kubectl wait --for=condition=Ready pods -l app.kubernetes.io/name=prometheus-adapter -n monitoring --timeout=120s
+
+	kubectl apply -f my-nginx/hpa-rps.yaml
+
+
+	@echo "Установка Ingress NGINX..."
 	helm install ingress-nginx ingress-nginx/ingress-nginx \
 		--namespace ingress-nginx --create-namespace \
 		--set controller.service.type=NodePort \
@@ -47,16 +58,19 @@ deploy: setup
 
 	kubectl wait --for=condition=Ready pods --all -n ingress-nginx --timeout=180s
 
+	@echo "Установка приложения..."
 	helm install my-static-site my-nginx/ --namespace $(NAMESPACE)
 
-	@echo "  Ждём пока поды приложения будут готовы..."
+	@echo "Ждём пока поды приложения будут готовы..."
 	kubectl wait --for=condition=Ready pods --all -n $(NAMESPACE) --timeout=180s
-	@echo "Развертывание завершено"
+	@echo ""
+	@echo "Развертывание завершено!"
+	
 
 
 check:
-	@echo " Команда 2: Проверка и тестирование системы..."
-	@echo "===  СТАТУС СИСТЕМЫ ==="
+	@echo " Проверка и тестирование системы..."
+	@echo "=== СТАТУС СИСТЕМЫ ==="
 	@echo "Кластеры Kind:"
 	@kind get clusters
 	@echo ""
@@ -68,15 +82,11 @@ check:
 	@echo ""
 	@echo "HPA статус:"
 	@kubectl get hpa
-	@echo ""
-	@echo "ScaledObject статус:"
-	@kubectl get scaledobject
-	@echo ""
-	@echo "===  ДОСТУПЫ ==="
+	@echo "=== ДОСТУПЫ ==="
 	@echo "Приложение: http://localhost:8080"
 	@$(MAKE) grafana-info	 
 	@echo ""
-	@echo "=== НАГРУЗОЧНОЕ ТЕСТИРОВАНИЕ ==="
+	@echo "=== ⚡ НАГРУЗОЧНОЕ ТЕСТИРОВАНИЕ ==="
 	@echo "Создаем нагрузку 10 RPS на 2 минуты..."
 	@(for i in $$(seq 1 1200); do curl -s http://localhost:8080/ >/dev/null 2>&1 & sleep 0.1; done) & \
 	CURL_PID=$$!; \

@@ -1,0 +1,36 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-static-site-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-static-site-my-static-site
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: External
+    external:
+      metric:
+        name: nginx_global_rps
+        selector:
+          matchLabels: {}
+      target:
+        type: AverageValue
+        averageValue: "5000m"  # 0.5 RPS на каждый под
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Min
+    scaleDown:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
